@@ -1,113 +1,29 @@
-import { app, Menu, Tray, BrowserWindow, ipcMain } from 'electron';
-import fs from 'fs';
+import { app, Menu, Tray, ipcMain } from 'electron';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import fetch from 'node-fetch';
+import process from 'process';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { aboutWindow } from './src/about.js';
+import { configWindow, loadConfig, saveConfig } from './src/config.js';
 
-const configPath = path.join(app.getPath('userData'), 'config.json');
-const defaultIconPath = path.join(__dirname, 'assets/icon.ico');
+const defaultIconPath = path.join(process.cwd(), 'assets/icon.ico');
 
 const appVersion = app.getVersion();
 const downloadUrl = 'https://github.com/Adib23704/Discord-AutoReply/releases/latest';
 
 let tray;
 let config;
-let configWindow;
-let aboutWindow;
-
-function loadConfig() {
-	if (fs.existsSync(configPath)) {
-		const configFile = fs.readFileSync(configPath);
-		return JSON.parse(configFile);
-	}
-	return {
-		msg: null,
-		token: null
-	};
-}
-
-function saveConfig(config) {
-	fs.writeFileSync(configPath, JSON.stringify(config));
-}
-
-function openConfigWindow() {
-	if (configWindow) {
-		configWindow.focus();
-		return;
-	}
-
-	configWindow = new BrowserWindow({
-		width: 400,
-		height: 380,
-		resizable: false,
-		webPreferences: {
-			nodeIntegration: true,
-			contextIsolation: false,
-		},
-		title: 'Discord AutoReply Config',
-		icon: defaultIconPath,
-		autoHideMenuBar: true,
-		center: true,
-		fullscreenable: false,
-		movable: true
-	});
-
-	configWindow.loadFile('html/config.html');
-
-	configWindow.on('closed', () => {
-		configWindow = null;
-	});
-
-	configWindow.webContents.on('did-finish-load', () => {
-		configWindow.webContents.send('config-data', config);
-	});
-}
-
-function openAboutWindow() {
-	if (aboutWindow) {
-		aboutWindow.focus();
-		return;
-	}
-
-	aboutWindow = new BrowserWindow({
-		width: 400,
-		height: 500,
-		resizable: false,
-		webPreferences: {
-			nodeIntegration: true,
-			contextIsolation: false,
-		},
-		title: 'About Discord AutoReply',
-		icon: defaultIconPath,
-		autoHideMenuBar: true,
-		center: true,
-		fullscreenable: false,
-		movable: true
-	});
-
-	aboutWindow.loadFile('html/about.html');
-
-	aboutWindow.on('closed', () => {
-		aboutWindow = null;
-	});
-
-	aboutWindow.webContents.on('did-finish-load', () => {
-		aboutWindow.webContents.send('about-data', appVersion);
-	});
-}
 
 function createContextMenu() {
 	const currentContextMenu = [
 		{ type: 'separator' },
 		{
 			label: 'Open Configuration',
-			click: openConfigWindow,
+			click: configWindow,
 		},
 		{
 			label: 'About',
-			click: openAboutWindow,
+			click: aboutWindow,
 		},
 		{ label: 'Quit', role: 'quit' },
 	];
